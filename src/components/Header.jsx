@@ -1,20 +1,19 @@
 import React, { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '../auth/AuthContext';
+import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from './AuthContext';
 
 const Header = ({ cartItems }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
-  const navigate = useNavigate();
-  const { user, logout, isAdmin, isUser } = useAuth();
+  const { user, isAdmin, logout } = useAuth();
   
   const cartItemCount = cartItems.reduce((total, item) => total + item.quantity, 0);
 
-  const handleLogout = () => {
-    logout();
-    navigate('/');
-    setIsMenuOpen(false);
-  };
+  // Jangan tampilkan header untuk admin dashboard
+  const isAdminDashboard = location.pathname.startsWith('/admin-dashboard');
+  if (isAdminDashboard) {
+    return null; // Header tidak ditampilkan di admin dashboard
+  }
 
   return (
     <header className="header">
@@ -52,27 +51,6 @@ const Header = ({ cartItems }) => {
             >
               Produk
             </Link>
-            
-            {user && isUser() && (
-              <Link 
-                to="/user/dashboard" 
-                className={`nav-link ${location.pathname.includes('/user') ? 'active' : ''}`}
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Dashboard Saya
-              </Link>
-            )}
-            
-            {user && isAdmin() && (
-              <Link 
-                to="/admin/dashboard" 
-                className={`nav-link ${location.pathname.includes('/admin') ? 'active' : ''}`}
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Dashboard Admin
-              </Link>
-            )}
-            
             <Link 
               to="/cart" 
               className={`nav-link cart-link ${location.pathname === '/cart' ? 'active' : ''}`}
@@ -84,36 +62,26 @@ const Header = ({ cartItems }) => {
                 <span className="cart-badge">{cartItemCount}</span>
               )}
             </Link>
-            
-            {/* Auth Menu */}
             {user ? (
-              <div className="user-menu">
-                <span className="user-greeting">Halo, {user.name.split(' ')[0]}!</span>
+              <>
+                {/* HAPUS LINK ADMIN DASHBOARD DARI SINI */}
                 <button 
-                  onClick={handleLogout}
-                  className="btn-logout"
-                  aria-label="Logout"
+                  className="nav-link logout-btn" 
+                  onClick={() => { logout(); setIsMenuOpen(false); }}
                 >
-                  Logout
+                  Logout ({user.username})
                 </button>
-              </div>
+              </>
             ) : (
-              <div className="auth-menu">
+              <>
                 <Link 
-                  to="/user/login" 
-                  className={`nav-link auth-link ${location.pathname === '/user/login' ? 'active' : ''}`}
+                  to="/login" 
+                  className={`nav-link ${location.pathname === '/login' ? 'active' : ''}`}
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  Login Customer
+                  Login
                 </Link>
-                <Link 
-                  to="/admin/login" 
-                  className={`nav-link auth-link admin ${location.pathname === '/admin/login' ? 'active' : ''}`}
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Login Admin
-                </Link>
-              </div>
+              </>
             )}
           </nav>
         </div>
