@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom'; // HAPUS BrowserRouter
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './auth/AuthContext';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import Home from './pages/Home';
@@ -7,8 +8,31 @@ import Products from './pages/Products';
 import ProductDetail from './pages/ProductDetail';
 import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
+import AdminLogin from './pages/admin/AdminLogin';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import UserLogin from './pages/user/UserLogin';
+import UserDashboard from './pages/user/UserDashboard';
 
-function App() {
+// Private Route Component
+const PrivateRoute = ({ children, role }) => {
+  const { user } = useAuth();
+  
+  if (!user) {
+    return <Navigate to={role === 'admin' ? '/admin/login' : '/user/login'} />;
+  }
+  
+  if (role === 'admin' && user.role !== 'admin') {
+    return <Navigate to="/" />;
+  }
+  
+  if (role === 'user' && user.role !== 'user') {
+    return <Navigate to="/" />;
+  }
+  
+  return children;
+};
+
+function AppContent() {
   const [cartItems, setCartItems] = useState(() => {
     const savedCart = localStorage.getItem('cart');
     return savedCart ? JSON.parse(savedCart) : [];
@@ -54,13 +78,14 @@ function App() {
     setCartItems([]);
   };
 
+  const { user } = useAuth();
+
   return (
-    // HAPUS <BrowserRouter> atau <Router> di sini!
     <div className="app">
-      <Header cartItems={cartItems} />
+      <Header cartItems={cartItems} user={user} />
       <main className="main-content">
         <Routes>
-          {/* PAKAI path TANPA slash depan untuk child routes */}
+          {/* Public Routes */}
           <Route path="/" element={<Home addToCart={addToCart} />} />
           <Route path="products" element={<Products addToCart={addToCart} />} />
           <Route path="product/:id" element={<ProductDetail addToCart={addToCart} />} />
@@ -83,11 +108,42 @@ function App() {
               />
             } 
           />
+          
+          {/* Auth Routes */}
+          <Route path="admin/login" element={<AdminLogin />} />
+          <Route path="user/login" element={<UserLogin />} />
+          
+          {/* Protected Routes */}
+          <Route 
+            path="admin/dashboard" 
+            element={
+              <PrivateRoute role="admin">
+                <AdminDashboard />
+              </PrivateRoute>
+            } 
+          />
+          <Route 
+            path="user/dashboard" 
+            element={
+              <PrivateRoute role="user">
+                <UserDashboard />
+              </PrivateRoute>
+            } 
+          />
+          
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
       <Footer />
     </div>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
 

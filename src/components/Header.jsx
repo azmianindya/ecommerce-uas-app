@@ -1,11 +1,20 @@
 import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../auth/AuthContext';
 
 const Header = ({ cartItems }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, logout, isAdmin, isUser } = useAuth();
   
   const cartItemCount = cartItems.reduce((total, item) => total + item.quantity, 0);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+    setIsMenuOpen(false);
+  };
 
   return (
     <header className="header">
@@ -43,6 +52,27 @@ const Header = ({ cartItems }) => {
             >
               Produk
             </Link>
+            
+            {user && isUser() && (
+              <Link 
+                to="/user/dashboard" 
+                className={`nav-link ${location.pathname.includes('/user') ? 'active' : ''}`}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Dashboard Saya
+              </Link>
+            )}
+            
+            {user && isAdmin() && (
+              <Link 
+                to="/admin/dashboard" 
+                className={`nav-link ${location.pathname.includes('/admin') ? 'active' : ''}`}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Dashboard Admin
+              </Link>
+            )}
+            
             <Link 
               to="/cart" 
               className={`nav-link cart-link ${location.pathname === '/cart' ? 'active' : ''}`}
@@ -54,6 +84,37 @@ const Header = ({ cartItems }) => {
                 <span className="cart-badge">{cartItemCount}</span>
               )}
             </Link>
+            
+            {/* Auth Menu */}
+            {user ? (
+              <div className="user-menu">
+                <span className="user-greeting">Halo, {user.name.split(' ')[0]}!</span>
+                <button 
+                  onClick={handleLogout}
+                  className="btn-logout"
+                  aria-label="Logout"
+                >
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <div className="auth-menu">
+                <Link 
+                  to="/user/login" 
+                  className={`nav-link auth-link ${location.pathname === '/user/login' ? 'active' : ''}`}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Login Customer
+                </Link>
+                <Link 
+                  to="/admin/login" 
+                  className={`nav-link auth-link admin ${location.pathname === '/admin/login' ? 'active' : ''}`}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Login Admin
+                </Link>
+              </div>
+            )}
           </nav>
         </div>
       </div>
